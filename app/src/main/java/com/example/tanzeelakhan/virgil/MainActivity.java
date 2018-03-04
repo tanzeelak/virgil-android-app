@@ -3,8 +3,11 @@ package com.example.tanzeelakhan.virgil;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.media.MediaPlayer;
+import android.os.Build;
 import android.os.StrictMode;
 import android.provider.MediaStore;
+import android.speech.tts.TextToSpeech;
+import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Base64;
@@ -12,6 +15,7 @@ import android.util.Log;
 import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 
 import org.json.JSONArray;
@@ -29,6 +33,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.Locale;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -44,6 +49,9 @@ public class MainActivity extends AppCompatActivity {
     public static final MediaType MEDIA_TYPE =
             MediaType.parse("image/jpeg");
     private MediaPlayer mediaPlayer = new MediaPlayer();
+    TextToSpeech tt;
+    Button hi;
+    EditText ed;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +66,15 @@ public class MainActivity extends AppCompatActivity {
 
         Button btnCamera = (Button) findViewById(R.id.btnCamera);
         imageView = (ImageView) findViewById(R.id.imageView);
+        tt = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+            public void onInit(int status) {
+                if (status != TextToSpeech.ERROR){
+                    tt.setLanguage((Locale.US));
+                }
+            }
+        });
+
+
 
         btnCamera.setOnClickListener(new View.OnClickListener(){
             @Override
@@ -73,10 +90,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data){
         super.onActivityResult(requestCode, resultCode, data);
         Bitmap bitmap = (Bitmap)data.getExtras().get("data");
-//        getMimeType(bitmap);
         imageView.setImageBitmap(bitmap);
         sendPost(bitmap);
-//        doInBackground();
+    }
+
+    public void speak(String text){
+        tt.speak(text, TextToSpeech.QUEUE_FLUSH, null, null );
     }
 
     public static String getMimeType(String url) {
@@ -157,12 +176,14 @@ public class MainActivity extends AppCompatActivity {
                 String mMessage = response.body().string();
                 if (response.isSuccessful()) {
                     try {
-//                        JSONObject json = new JSONObject(mMessage);
-//                        final String serverResponse = json.getString("Your Index");
-                        String serverResponse = mMessage;
+                        JSONObject json = new JSONObject(mMessage);
+                        String serverResponse = json.getString("text");
+//                        final String serverResponse = json.getString("1");
+//                        String serverResponse = mMessage;
                         Log.d("serverResponse", serverResponse);
-                        byte[] audioArray = serverResponse.getBytes();
+//                        byte[] audioArray = serverResponse.getBytes();
 //                        playMp3(audioArray);
+                        speak(serverResponse);
 
                     } catch (Exception e) {
                         e.printStackTrace();
